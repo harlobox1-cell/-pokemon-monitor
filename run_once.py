@@ -47,14 +47,37 @@ async def main():
     # This mode only checks the explicitly configured products.
     monitor.state.data['discovered'] = {}
     try:
+        if not monitor.state.data.get('connection_test_sent'):
+            await monitor.notifier.send(config.webhook, '✅ Pokémon monitor connection test', [
+                'Discord delivery is working. This is a setup test, not a stock alert.',
+                f'{len(config.watches)} product URLs configured. First-party sellers only.',
+                'Scheduled every 15 minutes; GitHub may delay runs. Only verified stock within fixed price caps will alert.',
+                'Coverage gaps are recorded in watchlist.json; no auto-purchases.'
+            ])
+            monitor.state.data['connection_test_sent'] = True
+            monitor.state.save()
         await monitor.cycle()
         failed = sum(bool(monitor.state.data['products'].get(p['url'], {}).get('last_error')) for p in config.watches)
         print(f'Checked {len(config.watches)} product(s); {failed} fetch error(s).')
-        if failed:
-            raise SystemExit('Some pages could not be checked. Review retailer URLs or browser rendering settings.')
+        unknown = sum(monitor.state.data['products'].get(p['url'], {}).get('in_stock') is None for p in config.watches)
+        if not monitor.state.data.get('first_cycle_report_sent'):
+            await monitor.notifier.send(config.webhook, 'Pokémon monitor first check complete', [
+                f'{len(config.watches)} configured; {failed} fetch errors; {unknown} unknown or excluded results.',
+                'Unknown sellers, marketplace offers and unverified availability are suppressed.',
+                'Stock alerts are separate. No qualifying stock does not mean the monitor is off.'
+            ])
+            monitor.state.data['first_cycle_report_sent'] = True
+            monitor.state.save()
+        if failed == len(config.watches):
+            raise SystemExit('All product checks failed; monitoring cannot confirm stock.')
     finally:
         await monitor.close()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as exc:
+        # Never put webhook URLs or response bodies in public Actions logs.
+        print(f'Monitor failed ({type(exc).__name__}); inspect configuration and connectivity.')
+        raise SystemExit(1) from None

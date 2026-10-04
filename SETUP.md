@@ -1,3 +1,19 @@
+# Overnight monitor status — 5 October 2026
+
+26 exact English-product URLs cover all requested sets: Ascended Heroes, Phantasmal Flames, Mega Evolution, Black Bolt, White Flare, Destined Rivals, Journey Together, Prismatic Evolutions, Surging Sparks, Paldean Fates and 151.
+
+Kmart, Target and Toymate are in the current watchlist. Marketplace offers are excluded; unknown sellers and unknown purchase controls cannot alert. The live page checks found marketplace substitutions at Kmart and disabled buy buttons despite InStock structured data on Toymate and Target. Those results are suppressed.
+
+Prices are fixed conservative ceilings from directly observed retailer listings, NOT independently certified manufacturer MSRP. They exclude shipping. Caps are per exact product and currency, never a retailer-wide ETB/pack allowance. They do not increase automatically if a retailer raises its price. Each row retains its source and SKU. Kmart's older direct-retail ceilings remain capped even when the page now serves a marketplace seller. Check the final delivered price before buying.
+
+The scheduled workflow is enabled unless the repository Actions variable `MONITOR_ENABLED` is set to `false`. It requests a run every 15 minutes; GitHub may delay or skip runs. A code/configuration push also triggers a check. The first run sends a labelled connection test and a first-cycle report; neither is a stock alert. Stock alerts follow only if all checks qualify. Alerts are deduplicated using cached snapshots; cache eviction can cause a repeat initial message.
+
+Still pending: EB Games returns HTTP 403; Japanese and Chinese equivalents need exact regional products and verified regional price caps. No import alerts or automatic purchases are enabled. Coverage does not include every product format or every retailer for each set.
+
+To pause: Settings → Secrets and variables → Actions → Variables → set `MONITOR_ENABLED` to `false`. To resume: remove that variable or set it to `true`. The webhook stays exclusively in the `DISCORD_WEBHOOK_URL` Actions secret.
+
+---
+
 # Finish setup from your phone
 
 The code being in GitHub does not mean alerts are running. Choose one mode.
@@ -22,7 +38,7 @@ The placeholder must be replaced. Use `null` for no maximum price. Prices are in
 4. Under Settings → Secrets and variables → Actions → Variables, create `MONITOR_ENABLED` with value `true`.
 5. Open Actions → Stock monitor → Run workflow. Review that run before relying on alerts.
 
-The requested schedule is every 15 minutes. GitHub may delay or skip scheduled jobs; this is not a real-time stock service. The workflow starts disabled until the variable is set. Remove the variable or set it to `false` to pause. Enable Actions if GitHub prompts you.
+The requested schedule is every 15 minutes. GitHub may delay or skip scheduled jobs; this is not a real-time stock service. Monitoring is enabled for this configured watchlist unless the variable is false. Set the variable to `false` to pause. Enable Actions if GitHub prompts you.
 
 Only product snapshots are cached, not the webhook or dashboard database. A missing/expired cache can cause first-seen alerts to repeat. Stock parsing is generic and has not been validated live across all retailers. Check each listing before purchase. Scheduled checks do not provide a dashboard or auto-checkout.
 

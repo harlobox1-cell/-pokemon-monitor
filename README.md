@@ -1,6 +1,6 @@
 # Pokémon Monitor Cloud v0.3
 
-**Setup status:** Code only. Alerts require configuration. Start with [SETUP.md](SETUP.md) for GitHub scheduled checks or dashboard hosting.
+**Setup status:** Overnight watchlist configured; scheduled workflow enabled unless MONITOR_ENABLED=false. Read SETUP.md for coverage and limitations. Start with [SETUP.md](SETUP.md) for GitHub scheduled checks or dashboard hosting.
 
 A phone-friendly, cloud-ready Pokémon stock monitor. It runs 24/7 on a cloud host and sends Discord alerts to your iPhone. You manage products and settings from a private web dashboard in Safari.
 

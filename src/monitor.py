@@ -4,6 +4,8 @@ import random
 from datetime import datetime, timezone
 
 from .fetcher import Fetcher
+from .alert_policy import refine_snapshot
+import math
 from .notifier import DiscordNotifier
 from .retailers import discover_product_links, infer_retailer, parse_product
 from .state import StateStore
@@ -31,12 +33,18 @@ class PokemonMonitor:
         await self.fetcher.close()
 
     def _eligible(self, snap, item, settings):
+        if settings.get("first_party_only") and not snap.first_party:
+            return False
+        if item.get("currency") and snap.currency != item["currency"]:
+            return False
+        if snap.price is not None and (not math.isfinite(snap.price) or snap.price <= 0):
+            return False
         if snap.in_stock is not True:
             return False
         max_price = item.get("max_price")
         if settings.get("require_price_for_alert") and snap.price is None:
             return False
-        if max_price is not None and snap.price is not None and snap.price > float(max_price):
+        if max_price is not None and (snap.price is None or snap.price > float(max_price)):
             return False
         return True
 
@@ -61,6 +69,8 @@ class PokemonMonitor:
         try:
             html = await self.fetcher.html(url, browser=bool(item.get("browser", False)))
             snap = parse_product(url, html, retailer)
+            if settings.get("strict_product_checks"):
+                snap = refine_snapshot(snap, html, item)
         except Exception as e:
             self.state.data["products"].setdefault(key, {})["last_error"] = str(e)[:500]
             self.state.save()
@@ -70,23 +80,18 @@ class PokemonMonitor:
         current = snap.to_dict()
         current["last_error"] = ""
         current["checked_at"] = datetime.now(timezone.utc).isoformat()
+        eligible = self._eligible(snap, item, settings)
+        was_eligible = bool(prev and prev.get("alert_eligible"))
+        if eligible:
+            if prev is None and settings.get("notify_on_first_in_stock", True):
+                await self._notify_stock(snap, item, "FIRST SEEN")
+            elif prev is not None and not was_eligible:
+                await self._notify_stock(snap, item, "RESTOCK / PRICE QUALIFIED")
+            elif prev is not None and prev.get("price") != snap.price:
+                await self._notify_stock(snap, item, "PRICE CHANGE")
+        current["alert_eligible"] = eligible
         self.state.data["products"][key] = current
         self.state.save()
-
-        eligible = self._eligible(snap, item, settings)
-        if prev is None:
-            if eligible and settings.get("notify_on_first_in_stock", True):
-                await self._notify_stock(snap, item, "FIRST SEEN")
-            return
-        was_in = prev.get("in_stock") is True
-        if eligible and not was_in:
-            await self._notify_stock(snap, item, "RESTOCK")
-        elif eligible and was_in and prev.get("price") != snap.price:
-            await self._notify(
-                f"💲 PRICE CHANGE: {snap.title}",
-                [f"Retailer: **{snap.retailer}**", f"Was: {prev.get('price')}", f"Now: **{snap.price} {snap.currency}**"],
-                snap.url,
-            )
 
     async def discover(self, entry, settings):
         if not entry.get("enabled"):

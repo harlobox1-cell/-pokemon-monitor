@@ -1,5 +1,12 @@
 name: Stock monitor
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'watchlist.json'
+      - 'run_once.py'
+      - 'src/**'
+      - '.github/workflows/monitor.yml'
   workflow_dispatch:
   schedule:
     - cron: '7,22,37,52 * * * *'
@@ -10,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   check:
-    if: vars.MONITOR_ENABLED == 'true'
+    if: vars.MONITOR_ENABLED != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

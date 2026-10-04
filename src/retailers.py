@@ -33,9 +33,9 @@ SKU_RE = re.compile(r"(?:SKU|PID|Product\s*ID|Product\s*Code)\s*[:#]?\s*([A-Za-z
 def infer_retailer(url: str) -> str:
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
-    if "jbhifi.com.au" in host:
+    if host == "jbhifi.com.au" or host.endswith(".jbhifi.com.au"):
         return "jb-hifi-au"
-    if "pokemoncenter.com" in host:
+    if host == "pokemoncenter.com" or host.endswith(".pokemoncenter.com"):
         return "pokemon-centre-au" if parsed.path.lower().startswith("/en-au") else "pokemon-center-us"
     for name, domains in RETAILERS.items():
         if name.startswith("pokemon-"):

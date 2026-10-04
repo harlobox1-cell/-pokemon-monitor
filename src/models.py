@@ -12,6 +12,7 @@ class ProductSnapshot:
     sku: str | None
     source: str
     note: str = ""
+    first_party: bool = False
 
     def to_dict(self):
         return asdict(self)
