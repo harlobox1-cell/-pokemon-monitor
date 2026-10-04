@@ -58,8 +58,25 @@ async def main():
             monitor.state.save()
         await monitor.cycle()
         failed = sum(bool(monitor.state.data['products'].get(p['url'], {}).get('last_error')) for p in config.watches)
-        print(f'Checked {len(config.watches)} product(s); {failed} fetch error(s).')
         unknown = sum(monitor.state.data['products'].get(p['url'], {}).get('in_stock') is None for p in config.watches)
+        failed_by_retailer = {}
+        for p in config.watches:
+            if monitor.state.data['products'].get(p['url'], {}).get('last_error'):
+                retailer = p.get('retailer') or infer_retailer(p['url'])
+                failed_by_retailer[retailer] = failed_by_retailer.get(retailer, 0) + 1
+        print(f'Checked {len(config.watches)} product(s); {failed} fetch error(s); failures by retailer: {failed_by_retailer}.')
+
+        health_notice_version = 'browser-fix-v1'
+        if monitor.state.data.get('health_notice_version') != health_notice_version:
+            await monitor.notifier.send(config.webhook, '✅ Pokémon monitor health check', [
+                f'{len(config.watches) - failed}/{len(config.watches)} product pages fetched successfully.',
+                f'{failed} fetch error(s); {unknown} unknown or excluded result(s).',
+                'The Toymate browser-rendering repair is active.',
+                'No stock alert means no configured product qualified for an alert on this check.'
+            ])
+            monitor.state.data['health_notice_version'] = health_notice_version
+            monitor.state.save()
+
         if not monitor.state.data.get('first_cycle_report_sent'):
             await monitor.notifier.send(config.webhook, 'Pokémon monitor first check complete', [
                 f'{len(config.watches)} configured; {failed} fetch errors; {unknown} unknown or excluded results.',
