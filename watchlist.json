@@ -1,0 +1,7 @@
+{
+  "settings": {
+    "notify_on_first_in_stock": true,
+    "require_price_for_alert": true
+  },
+  "products": []
+}

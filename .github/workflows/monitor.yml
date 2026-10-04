@@ -1,0 +1,42 @@
+name: Stock monitor
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: stock-monitor
+  cancel-in-progress: false
+jobs:
+  check:
+    if: vars.MONITOR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Install browser if requested by a product
+        run: |
+          if python -c 'import json,sys; sys.exit(0 if any(p.get("browser") for p in json.load(open("watchlist.json"))["products"]) else 1)'; then
+            python -m playwright install --with-deps chromium
+          fi
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/state.json
+          key: stock-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: stock-state-
+      - name: Check stock
+        run: python run_once.py
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          PLAYWRIGHT_ENABLED: 'true'
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/state.json
+          key: stock-state-${{ github.run_id }}-${{ github.run_attempt }}

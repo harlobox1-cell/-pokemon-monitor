@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: pokemon-monitor
+    runtime: docker
+    healthCheckPath: /health
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: pokemon-monitor-data
+      mountPath: /data
+      sizeGB: 1
