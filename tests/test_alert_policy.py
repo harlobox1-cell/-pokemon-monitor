@@ -35,6 +35,19 @@ def test_missing_primary_control_is_unknown():
     assert snap.in_stock is None
 
 
+def test_toymate_explicit_online_status_is_scoped_to_watched_sku():
+    h=page(sku='26001559')+'<div>SKU: 26001559 Online: Not Available</div><div>SKU: 99999999 Online: Available Add to Cart</div>'
+    snap=refine_snapshot(parse_product('https://toymate.com.au/example/',h),h,{'expected_sku':'26001559'})
+    assert snap.in_stock is False
+    assert 'Toymate online status' in snap.note
+
+
+def test_toymate_explicit_available_status_can_qualify():
+    h=page(sku='26001559')+'<div>SKU: 26001559 Online: Available</div>'
+    snap=refine_snapshot(parse_product('https://toymate.com.au/example/',h),h,{'expected_sku':'26001559'})
+    assert snap.in_stock is True
+
+
 def test_wrong_sku_is_suppressed():
     h=page('Target Australia')
     snap=refine_snapshot(parse_product('https://www.target.com.au/p/example/123',h),h,{'expected_sku':'456'})
