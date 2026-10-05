@@ -1,0 +1,38 @@
+name: Cart test
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Toymate product URL
+        required: true
+        type: string
+      sku:
+        description: Expected Toymate SKU
+        required: true
+        type: string
+      max_price:
+        description: Maximum AUD price
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  cart-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m playwright install chromium
+      - name: Add one item to temporary cart and stop
+        run: python cart_once.py --url "$PRODUCT_URL" --sku "$EXPECTED_SKU" --max-price "$MAX_PRICE"
+        env:
+          PRODUCT_URL: ${{ inputs.url }}
+          EXPECTED_SKU: ${{ inputs.sku }}
+          MAX_PRICE: ${{ inputs.max_price }}
