@@ -60,13 +60,13 @@ def toymate_online_status(soup, item, snap):
     sku = str(item.get('expected_sku') or snap.sku or '').strip()
     if not sku:
         return None
-    match = re.search(r'.{0,1200}SKU\\s*:\\s*' + re.escape(sku) + r'.{0,1200}', text, re.I)
+    match = re.search(r'.{0,1200}SKU\s*:\s*' + re.escape(sku) + r'.{0,1200}', text, re.I)
     if not match:
         return None
     scope = match.group(0)
-    if re.search(r'Online\\s*:\\s*Not Available|Not Available Online|Available in store only|Out of stock|Stock\\s*:\\s*0\\b', scope, re.I):
+    if re.search(r'Online\s*:\s*Not Available|Not Available Online|Available in store only|Out of stock|Stock\s*:\s*0\b', scope, re.I):
         return False
-    if re.search(r'Online\s*:\s*Available\b|Available Online|Stock\s*:\s*[1-9]\d*\b', scope, re.I):
+    if re.search(r'Online\s*:\s*Available\b|Available online(?: and in store)?|Stock\s*:\s*[1-9]\d*\b|I agree\s*\+?\s*add to cart', scope, re.I):
         return True
     return None
 
