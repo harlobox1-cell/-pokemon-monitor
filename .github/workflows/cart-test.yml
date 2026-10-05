@@ -15,6 +15,9 @@ on:
         description: Maximum AUD price
         required: true
         type: string
+  push:
+    paths:
+      - cart-smoke-trigger.txt
 
 permissions:
   contents: read
@@ -33,6 +36,6 @@ jobs:
       - name: Add one item to temporary cart and stop
         run: python cart_once.py --url "$PRODUCT_URL" --sku "$EXPECTED_SKU" --max-price "$MAX_PRICE"
         env:
-          PRODUCT_URL: ${{ inputs.url }}
-          EXPECTED_SKU: ${{ inputs.sku }}
-          MAX_PRICE: ${{ inputs.max_price }}
+          PRODUCT_URL: ${{ inputs.url || 'https://toymate.com.au/pokemon-tcg-mega-evolutions-5-pitch-black-sleeved-booster/' }}
+          EXPECTED_SKU: ${{ inputs.sku || '26004973' }}
+          MAX_PRICE: ${{ inputs.max_price || '8.99' }}
