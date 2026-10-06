@@ -3,7 +3,8 @@
     "notify_on_first_in_stock": true,
     "require_price_for_alert": true,
     "first_party_only": true,
-    "strict_product_checks": true
+    "strict_product_checks": true,
+    "purchases_enabled": false
   },
   "products": [
     {
@@ -17,7 +18,10 @@
       "browser": false,
       "price_source": "https://www.kmart.com.au//product/pokemon-trading-card-game:-scarlet-and-violet-prismatic-evolutions-elite-trainer-box-43556663/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon Trading Card Game: Scarlet & Violet Paldean Fates - Assorted - One Size",
@@ -30,7 +34,10 @@
       "browser": false,
       "price_source": "https://www.kmart.com.au/product/pokemon-trading-card-game-scarlet-and-violet-paldean-fates-43405879/?sku=43405879",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet—Journey Together - Blister Pack - Assorted*",
@@ -43,7 +50,10 @@
       "browser": false,
       "price_source": "https://www.target.com.au/p/pokemon-tcg-scarlet-violet-journey-together-blister-pack-assorted/71070100",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Mega Evolutions 2 Phantasmal Flames Elite Trainer Box",
@@ -56,7 +66,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-mega-evolutions-2-phantasmal-flames-elite-trainer-box/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Mega Evolution Elite Trainer Box",
@@ -69,7 +82,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-mega-evolution-elite-trainer-box/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet 10 Destined Rivals Elite Trainer Box",
@@ -82,7 +98,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-10-destined-rivals-elite-trainer-box/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet-Surging Sparks Sleeved Booster Pack",
@@ -95,7 +114,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-surging-sparks-sleeved-booster-pack/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet – Surging Sparks Booster Bundle",
@@ -108,7 +130,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-surging-sparks-booster-bundle/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet 10.5 Unova Victini Illustration Collection",
@@ -121,7 +146,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-10-5-unova-victini-illustration-collection/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet 8.5 Prismatic Evolutions Super-Premium Collection",
@@ -134,7 +162,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-8-5-prismatic-evolutions-super-premium-collection/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Ascended Heroes Elite Trainer Box",
@@ -147,7 +178,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-ascended-heroes-elite-trainer-box/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Ascended Heroes 2pack Blister",
@@ -160,7 +194,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-ascended-heroes-2pack-blister/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Ascended Heroes Booster Bundle",
@@ -173,7 +210,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-ascended-heroes-booster-bundle/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Ascended Heroes ex Box",
@@ -186,7 +226,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-ascended-heroes-ex-box/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Ascended Heroes Mini Tin",
@@ -199,7 +242,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-ascended-heroes-mini-tin/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Mega Evolutions 2 Phantasmal Flames Blisters",
@@ -212,7 +258,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-mega-evolutions-2-phantasmal-flames-blisters/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Mega Evolutions 2 Phantasmal Flames Booster Bundle",
@@ -225,7 +274,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-mega-evolutions-2-phantasmal-flames-booster-bundle/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Mega Evolutions 2 Phantasmal Flames Three booster blister",
@@ -238,7 +290,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-mega-evolutions-2-phantasmal-flames-three-booster-blister/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Prismatic Evolutions Booster Bundle",
@@ -251,7 +306,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-prismatic-evolutions-booster-bundle/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet 10 Destined Rivals Booster Bundle",
@@ -264,7 +322,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-10-destined-rivals-booster-bundle/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet 10 Destined Rivals Booster Pack",
@@ -277,7 +338,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-10-destined-rivals-booster-pack/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet 10 Destined Rivals Three booster blister",
@@ -290,7 +354,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-10-destined-rivals-three-booster-blister/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet—151 Booster Bundle Set",
@@ -303,7 +370,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-151-booster-bundle-set/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG Scarlet & Violet—151 Poster Collection",
@@ -316,7 +386,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-151-poster-collection/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet Black Bolt Tech Sticker 3-Pack",
@@ -329,7 +402,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-black-bolt-tech-sticker-3-pack/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     },
     {
       "name": "Pokemon TCG: Scarlet & Violet White Flare Tech Sticker 3-Pack",
@@ -342,7 +418,10 @@
       "browser": true,
       "price_source": "https://toymate.com.au/pokemon-tcg-scarlet-violet-white-flare-tech-sticker-3-pack/",
       "price_basis": "Conservative direct-retailer listed price ceiling; not independently certified manufacturer MSRP",
-      "checked_date": "2026-10-05"
+      "checked_date": "2026-10-05",
+      "auto_buy": false,
+      "max_quantity": 1,
+      "quantity": 1
     }
   ],
   "requested_sets": [

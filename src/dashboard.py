@@ -68,6 +68,7 @@ def build_app(store, monitor, admin_password: str):
           <div class='card'><div class='spread'><strong>Monitor</strong><span class='{'good' if settings.get('monitor_enabled') else 'bad'}'>{'ON' if settings.get('monitor_enabled') else 'OFF'}</span></div><p class='muted small'>Polling about every {int(settings.get('poll_seconds',60))} seconds.</p></div>
           <div class='card'><div class='spread'><strong>Discord</strong><span class='{'good' if webhook else 'warn'}'>{'CONNECTED' if webhook else 'NOT SET'}</span></div><p class='muted small'>{good} currently in-stock result(s).</p></div>
         </div>
+        <div class='card'><strong>Master purchase permission: {'ON' if settings.get('purchases_enabled') is True else 'OFF'}</strong><p class='small'>Purchase controls only; checkout is not connected.</p></div>
         <h2>Latest product checks</h2>
         """
         if not products:
@@ -79,6 +80,8 @@ def build_app(store, monitor, admin_password: str):
                 stock = "IN STOCK" if val is True else "OUT" if val is False else "UNKNOWN"
                 price = "Unknown" if data.get("price") is None else f"{data.get('price')} {html.escape(str(data.get('currency','AUD')))}"
                 body += f"<div class='card'><div class='product-title'>{html.escape(data.get('title') or url)}</div><p><span class='{cls}'>{stock}</span> · {html.escape(price)}</p><div class='row'><span class='pill'>{html.escape(data.get('retailer','unknown'))}</span><a class='btn secondary' href='{html.escape(url)}' target='_blank' rel='noopener'>Open</a></div></div>"
+                reason = str(data.get("purchase_reason") or "No purchase assessment recorded")
+                body += f"<p class='muted small'>Purchase assessment at last check: {html.escape(reason)}. This is a saved observation, not current permission to spend.</p>"
         return web.Response(text=page("Dashboard", body, True, request.query.get("msg", "")), content_type="text/html")
 
     async def settings_get(request):
@@ -88,6 +91,8 @@ def build_app(store, monitor, admin_password: str):
         <h1>Settings</h1>
         <div class='card'><form method='post'>
         <div class='switchline'><input type='checkbox' name='monitor_enabled' {'checked' if s.get('monitor_enabled') else ''}><label style='margin:0'>Monitor enabled</label></div>
+        <div class='switchline'><input type='checkbox' name='purchases_enabled' {'checked' if s.get('purchases_enabled') is True else ''}><label style='margin:0'>Master purchase permission (OFF blocks all purchases)</label></div>
+        <p class='muted small'>Controls only. This version does not execute checkout or payment.</p>
         <label>Poll interval (seconds, minimum 30)</label><input type='number' min='30' max='3600' name='poll_seconds' value='{int(s.get('poll_seconds',60))}'>
         <label>Discord webhook</label><input type='password' name='webhook' placeholder='{webhook_label}' autocomplete='off'>
         <p class='muted small'>Webhook is encrypted before it is stored. Leaving this blank keeps the current webhook.</p>
@@ -116,6 +121,7 @@ def build_app(store, monitor, admin_password: str):
             if not webhook.startswith("https://discord.com/api/webhooks/") and not webhook.startswith("https://discordapp.com/api/webhooks/"):
                 raise web.HTTPBadRequest(text="That does not look like a Discord webhook URL.")
             store.set_webhook(webhook)
+        store.set_setting("purchases_enabled", f.get("purchases_enabled") == "on")
         monitor.wake()
         raise web.HTTPFound("/settings?msg=" + quote("Settings saved"))
 
@@ -137,6 +143,14 @@ def build_app(store, monitor, admin_password: str):
             body += "<div class='card'>No products added yet.</div>"
         for r in rows:
             body += f"""<div class='card'><div class='spread'><div><strong>{html.escape(r.get('name') or r['url'])}</strong><div class='muted small'>{html.escape(r.get('retailer') or 'unknown')}</div></div><span class='{'good' if r['enabled'] else 'bad'}'>{'ON' if r['enabled'] else 'OFF'}</span></div><p class='small'><code>{html.escape(r['url'])}</code></p><div class='row'><form class='inline' method='post' action='/watches/{r['id']}/toggle'><button class='secondary'>Toggle</button></form><form class='inline' method='post' action='/watches/{r['id']}/delete'><button class='danger'>Delete</button></form></div></div>"""
+            body += f"""<div class='card'><form method='post' action='/watches/{r['id']}/purchase-rule'>
+            <strong>Purchase controls</strong><p class='small'>Auto-buy: {'ON' if r['auto_buy'] else 'OFF'} · no checkout execution</p>
+            <label>Exact SKU/PID</label><input name='expected_sku' value='{html.escape(r['expected_sku'], quote=True)}' required>
+            <label>Maximum unit price (AUD, also used for alerts)</label><input name='max_price' type='number' min='0.01' step='0.01' value='{r['max_price'] if r['max_price'] is not None else ''}' required>
+            <label>Maximum quantity</label><input name='max_quantity' type='number' min='1' step='1' value='{r['max_quantity']}' required>
+            <label>Requested quantity (cart adapter supports one)</label><input name='quantity' type='number' min='1' step='1' value='{r['quantity']}' required>
+            <div class='switchline'><input name='auto_buy' type='checkbox' {'checked' if r['auto_buy'] else ''}><label style='margin:0'>Auto-buy permission</label></div>
+            <p><button>Save purchase controls</button></p></form></div>"""
         return web.Response(text=page("Products", body, True, request.query.get("msg", "")), content_type="text/html")
 
     async def watches_post(request):
@@ -150,6 +164,20 @@ def build_app(store, monitor, admin_password: str):
         store.add_watch(str(f.get("name", "")).strip(), retailer, url, max_price, f.get("browser") == "on")
         monitor.wake()
         raise web.HTTPFound("/watches?msg=" + quote("Product added"))
+
+    async def purchase_rule_post(request):
+        f = await request.post()
+        try:
+            store.set_purchase_rule(int(request.match_info["id"]),
+                expected_sku=str(f.get("expected_sku", "")),
+                max_price=f.get("max_price"),
+                max_quantity=int(f.get("max_quantity", "")),
+                quantity=int(f.get("quantity", "")),
+                auto_buy=f.get("auto_buy") == "on")
+        except (ValueError, TypeError, OverflowError):
+            raise web.HTTPBadRequest(text="Enter an exact SKU, positive AUD price and whole quantities within the maximum.")
+        monitor.wake()
+        raise web.HTTPFound("/watches?msg=" + quote("Purchase controls saved"))
 
     async def watches_toggle(request):
         store.toggle_watch(int(request.match_info["id"]))
@@ -205,6 +233,7 @@ def build_app(store, monitor, admin_password: str):
     app.router.add_post("/test-discord", test_discord)
     app.router.add_get("/watches", watches_get)
     app.router.add_post("/watches", watches_post)
+    app.router.add_post("/watches/{id}/purchase-rule", purchase_rule_post)
     app.router.add_post("/watches/{id}/toggle", watches_toggle)
     app.router.add_post("/watches/{id}/delete", watches_delete)
     app.router.add_get("/discover", discover_get)
@@ -212,3 +241,4 @@ def build_app(store, monitor, admin_password: str):
     app.router.add_post("/discover/{id}/toggle", discover_toggle)
     app.router.add_post("/discover/{id}/delete", discover_delete)
     return app
+

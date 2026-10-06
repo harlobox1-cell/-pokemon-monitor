@@ -12,6 +12,7 @@ def make_snapshot(price=59.99, sku="26000001", in_stock=True, first_party=True):
         in_stock=in_stock,
         sku=sku,
         source="test",
+        stock_verified=True,
         first_party=first_party,
     )
 
@@ -38,3 +39,4 @@ def test_unknown_stock_is_blocked():
 
 def test_non_first_party_is_blocked():
     assert evaluate_buy_rule(make_snapshot(first_party=False), rule()).eligible is False
+

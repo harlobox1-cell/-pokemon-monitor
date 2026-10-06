@@ -8,6 +8,7 @@ class Fetcher:
         self.user_agent = user_agent
         self._browser = None
         self._playwright = None
+        self.last_response = {}
 
     async def close(self):
         if self._browser:
@@ -24,13 +25,16 @@ class Fetcher:
             self._browser = await self._playwright.chromium.launch(headless=True)
         page = await self._browser.new_page(user_agent=self.user_agent)
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_seconds * 1000)
+            response = await page.goto(url, wait_until="domcontentloaded", timeout=self.timeout_seconds * 1000)
             await page.wait_for_timeout(1200)
-            return await page.content()
+            content = await page.content()
+            self.last_response[url] = {"url": page.url, "status": response.status if response else None}
+            return content
         finally:
             await page.close()
 
     async def html(self, url: str, browser: bool = False) -> str:
+        self.last_response.pop(url, None)
         if browser:
             return await self._browser_html(url)
         timeout = aiohttp.ClientTimeout(total=self.timeout_seconds)
@@ -42,4 +46,6 @@ class Fetcher:
         async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
             async with session.get(url, allow_redirects=True) as resp:
                 resp.raise_for_status()
-                return await resp.text()
+                content = await resp.text()
+                self.last_response[url] = {"url": str(resp.url), "status": resp.status}
+                return content

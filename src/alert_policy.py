@@ -3,6 +3,7 @@ import json
 import re
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
+from .purchase_evidence import annotate_purchase_evidence
 
 MARKETPLACE_RETAILERS = {'kmart-au': 'kmart', 'big-w-au': 'bigw', 'target-au': 'target'}
 
@@ -132,4 +133,5 @@ def refine_snapshot(snap, html, item):
         if normalized(term) not in normalized(snap.title):
             snap.in_stock = None
             snap.note = 'Product title no longer matches watchlist'
+    annotate_purchase_evidence(snap, soup, products, product, item)
     return snap

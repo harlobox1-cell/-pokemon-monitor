@@ -12,6 +12,7 @@ def snap(**kw):
         in_stock=True,
         sku="26000001",
         source="json-ld",
+        stock_verified=True,
         first_party=True,
     )
     base.update(kw)
@@ -52,3 +53,4 @@ def test_cart_rule_blocks_unknown_stock():
 def test_cart_rule_blocks_quantity_over_one():
     ok, _ = validate_for_cart(snap(), rule(quantity=2))
     assert ok is False
+
