@@ -22,6 +22,9 @@ class PokemonMonitor:
         self._stop = asyncio.Event()
         self._wake = asyncio.Event()
         self.running = False
+        self.stock_alert_attempts = 0
+        self.stock_alerts_sent = 0
+        self.run_observations = {}
 
     def stop(self):
         self._stop.set()
@@ -50,9 +53,11 @@ class PokemonMonitor:
         return True
 
     async def _notify(self, title, lines, url=None):
-        webhook = self.config_store.get_webhook()
+        webhook = (self.config_store.get_webhook() or "").strip()
         if webhook:
             await self.notifier.send(webhook, title, lines, url)
+            return True
+        return False
 
     async def _notify_stock(self, snap, item, kind="RESTOCK"):
         price = "Unknown" if snap.price is None else f"{snap.price:.2f} {snap.currency}"
@@ -61,7 +66,9 @@ class PokemonMonitor:
             lines.append(f"SKU/PID: `{snap.sku}`")
         if item.get("max_price") is not None:
             lines.append(f"Your max: {float(item['max_price']):.2f}")
-        await self._notify(f"🚨 {kind}: {snap.title}", lines, snap.url)
+        self.stock_alert_attempts += 1
+        if await self._notify(f"🚨 {kind}: {snap.title}", lines, snap.url):
+            self.stock_alerts_sent += 1
 
     async def check_item(self, item, settings):
         url = item["url"]
@@ -74,6 +81,7 @@ class PokemonMonitor:
             if settings.get("strict_product_checks"):
                 snap = refine_snapshot(snap, html, item)
         except Exception as e:
+            self.run_observations[url] = {"last_error": type(e).__name__}
             self.state.data["products"].setdefault(key, {})["last_error"] = str(e)[:500]
             self.state.save()
             return
@@ -83,6 +91,7 @@ class PokemonMonitor:
         current["last_error"] = ""
         current["checked_at"] = datetime.now(timezone.utc).isoformat()
         eligible = self._eligible(snap, item, settings)
+        self.run_observations[url] = {**current, "alert_eligible": eligible}
         was_eligible = bool(prev and prev.get("alert_eligible"))
         if eligible:
             if prev is None and settings.get("notify_on_first_in_stock", True):
@@ -138,6 +147,9 @@ class PokemonMonitor:
         self.state.save()
 
     async def cycle(self):
+        self.stock_alert_attempts = 0
+        self.stock_alerts_sent = 0
+        self.run_observations = {}
         settings = self.config_store.get_settings()
         if not settings.get("monitor_enabled", True):
             return
