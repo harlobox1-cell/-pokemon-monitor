@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from .alert_policy import refine_snapshot
+from .buy_rules import evaluate_buy_rule
 from .retailers import infer_retailer, parse_product
 
 
@@ -19,26 +20,9 @@ class CartResult:
 
 
 def validate_for_cart(snap, item: dict) -> tuple[bool, str]:
-    """Fail closed before any cart action."""
-    if snap.retailer != "toymate-au":
-        return False, "Toymate cart adapter only"
-    if not snap.first_party:
-        return False, "First-party retailer not confirmed"
-    if snap.in_stock is not True:
-        return False, "Product is not verified as available online"
-    if snap.currency != item.get("currency", "AUD"):
-        return False, "Currency does not match buy rule"
-    if snap.price is None or snap.price <= 0:
-        return False, "Price could not be verified"
-    ceiling = item.get("max_price")
-    if ceiling is None or snap.price > float(ceiling):
-        return False, "Price exceeds configured maximum"
-    expected = str(item.get("expected_sku") or "").strip()
-    if expected and str(snap.sku or "").strip() != expected:
-        return False, "SKU/PID does not match buy rule"
-    if int(item.get("quantity", 1)) != 1:
-        return False, "v0.4 cart adapter only permits quantity 1"
-    return True, "eligible"
+    """Use the shared explicit cart-test validator."""
+    decision = evaluate_buy_rule(snap, item)
+    return decision.eligible, decision.reason
 
 
 async def toymate_cart_once(item: dict, *, headless: bool = True) -> CartResult:
@@ -61,7 +45,7 @@ async def toymate_cart_once(item: dict, *, headless: bool = True) -> CartResult:
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await page.wait_for_timeout(1200)
             html = await page.content()
-            snap = parse_product(url, html, "toymate-au")
+            snap = parse_product(page.url, html, "toymate-au")
             snap = refine_snapshot(snap, html, item)
             allowed, reason = validate_for_cart(snap, item)
             if not allowed:
@@ -97,3 +81,4 @@ async def toymate_cart_once(item: dict, *, headless: bool = True) -> CartResult:
         finally:
             await context.close()
             await browser.close()
+

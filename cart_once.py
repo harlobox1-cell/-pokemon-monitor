@@ -29,7 +29,7 @@ async def cart_once(url: str, sku: str, max_price: float, headed: bool = False):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await page.wait_for_timeout(1500)
             html = await page.content()
-            snap = refine_snapshot(parse_product(url, html, "toymate-au"), html, item)
+            snap = refine_snapshot(parse_product(page.url, html, "toymate-au"), html, item)
             decision = evaluate_buy_rule(snap, item)
             if not decision.eligible:
                 return {"status": "BLOCKED", "reason": decision.reason, "snapshot": snap.to_dict()}
@@ -86,3 +86,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

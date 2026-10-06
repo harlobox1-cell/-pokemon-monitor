@@ -14,5 +14,9 @@ class ProductSnapshot:
     note: str = ""
     first_party: bool = False
 
+    stock_verified: bool = False
+    security_blocked: bool = False
+
     def to_dict(self):
         return asdict(self)
+

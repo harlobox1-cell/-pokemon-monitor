@@ -4,6 +4,7 @@ import random
 from datetime import datetime, timezone
 
 from .fetcher import Fetcher
+from .buy_rules import evaluate_purchase
 from .alert_policy import refine_snapshot
 import math
 from .notifier import DiscordNotifier
@@ -89,6 +90,14 @@ class PokemonMonitor:
                 await self._notify_stock(snap, item, "RESTOCK / PRICE QUALIFIED")
             elif prev is not None and prev.get("price") != snap.price:
                 await self._notify_stock(snap, item, "PRICE CHANGE")
+        try:
+            purchase_snap = refine_snapshot(parse_product(url, html, retailer), html, item)
+            decision = evaluate_purchase(purchase_snap, item, settings)
+            current["purchase_eligible"] = decision.eligible
+            current["purchase_reason"] = decision.reason
+        except Exception:
+            current["purchase_eligible"] = False
+            current["purchase_reason"] = "Purchase evidence could not be verified"
         current["alert_eligible"] = eligible
         self.state.data["products"][key] = current
         self.state.save()
@@ -181,3 +190,4 @@ class PokemonMonitor:
         finally:
             self.running = False
             await self.close()
+

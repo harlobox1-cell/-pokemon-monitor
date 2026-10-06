@@ -84,3 +84,32 @@ docker run --rm -p 8080:8080 -e ADMIN_PASSWORD='choose-a-password' -v pokemon-mo
 ## Notes on retailer monitoring
 
 Retailer pages change frequently. The generic parser uses JSON-LD and visible stock/price wording. Some JavaScript-heavy pages may need **Use browser rendering** enabled in the dashboard. This is browser rendering only; it is not intended to bypass retailer challenges or access controls.
+
+
+
+### Purchase controls (disabled by default)
+
+Settings contains a separate master purchase permission (`purchases_enabled`, default
+`false`). Each saved product has an Auto-buy permission (`auto_buy`, default `false`),
+an exact `expected_sku`, AUD `currency`, `max_price` per unit, requested `quantity`
+and `max_quantity`. Existing databases migrate in place without enabling either switch.
+Product edits preserve purchase controls; updating the maximum price also updates the
+existing alert ceiling. Discovery never grants purchase permission.
+
+`evaluate_purchase` requires both switches to be literal booleans, an enabled explicit
+product rule, an exact HTTPS Toymate URL/SKU, positive finite prices, whole positive
+quantities within the cap, confirmed first-party AUD offers and conservative verified
+online stock evidence. Unknown evidence and security verification stop eligibility.
+The monitor records `purchase_eligible` and `purchase_reason` separately from existing
+stock alerts. Other retailers remain supported for monitoring; purchase eligibility is
+currently Toymate-only and ambiguous page variants are blocked.
+
+These are controls, not a checkout implementation. Neither switch starts a cart or
+payment action. The existing explicit cart-only test remains quantity-one and now
+shares strict price/SKU/URL validation (including the final browser URL after redirect).
+It never authorizes payment and is separate from Auto-buy permission. No CAPTCHA,
+queue, anti-bot, 3DS, retailer purchase-limit, session or security bypass is implemented.
+Any future spending executor must re-read controls and revalidate current seller,
+stock, cart quantities, price, currency and totals immediately before each side effect.
+
+Run offline tests with `python -m pytest -q`; no live retailer purchases are tested.

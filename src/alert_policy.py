@@ -132,4 +132,15 @@ def refine_snapshot(snap, html, item):
         if normalized(term) not in normalized(snap.title):
             snap.in_stock = None
             snap.note = 'Product title no longer matches watchlist'
+    # Purchase evidence is deliberately stricter than monitoring heuristics.
+    snap.security_blocked = bool(re.search(r'captcha|verify you are human|waiting room|you are in (?:a |the )?queue|3d secure|3ds verification|security verification', soup.get_text(' ', strip=True), re.I))
+    snap.stock_verified = bool(
+        not snap.security_blocked and len(products) == 1 and product and snap.first_party is True and snap.in_stock is True
+        and snap.retailer == 'toymate-au'
+        and toymate_online_status(soup, item, snap) is True
+        and re.search(r'SKU\s*:\s*' + re.escape(str(item.get('expected_sku') or '')) + r'\s+Online\s*:\s*Available\b', soup.get_text(' ', strip=True), re.I)
+        and (not product.get('url') or str(product['url']).rstrip('/') == snap.url.rstrip('/'))
+        and str(product.get('sku') or '') == item.get('expected_sku')
+    )
     return snap
+

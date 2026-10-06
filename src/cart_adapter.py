@@ -22,7 +22,7 @@ async def add_verified_toymate_item(page, item: dict) -> CartAttempt:
     await page.wait_for_timeout(1200)
 
     html = await page.content()
-    snap = parse_product(item["url"], html, "toymate-au")
+    snap = parse_product(page.url, html, "toymate-au")
     snap = refine_snapshot(snap, html, item)
     decision = evaluate_buy_rule(snap, item)
     if not decision.eligible:
@@ -43,3 +43,4 @@ async def add_verified_toymate_item(page, item: dict) -> CartAttempt:
     await button.click()
     await page.wait_for_timeout(1200)
     return CartAttempt(True, "Added one verified item to cart", snap.title, snap.price, snap.sku)
+

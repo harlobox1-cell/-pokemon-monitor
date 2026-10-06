@@ -6,6 +6,7 @@ from .secure_store import SecretBox
 
 DEFAULT_SETTINGS = {
     "monitor_enabled": True,
+    "purchases_enabled": False,
     "poll_seconds": 60,
     "jitter_seconds": 8,
     "request_timeout_seconds": 20,
@@ -55,6 +56,16 @@ class ConfigStore:
                 product_browser INTEGER NOT NULL DEFAULT 0
             );
             """)
+            columns = {r["name"] for r in c.execute("PRAGMA table_info(watches)")}
+            for name, definition in {
+                "expected_sku": "TEXT NOT NULL DEFAULT ''",
+                "currency": "TEXT NOT NULL DEFAULT 'AUD'",
+                "max_quantity": "INTEGER NOT NULL DEFAULT 1",
+                "quantity": "INTEGER NOT NULL DEFAULT 1",
+                "auto_buy": "INTEGER NOT NULL DEFAULT 0",
+            }.items():
+                if name not in columns:
+                    c.execute(f"ALTER TABLE watches ADD COLUMN {name} {definition}")
             for k, v in DEFAULT_SETTINGS.items():
                 c.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (k, json.dumps(v)))
 
@@ -85,7 +96,10 @@ class ConfigStore:
 
     def list_watches(self):
         with self.connect() as c:
-            return [dict(r) for r in c.execute("SELECT * FROM watches ORDER BY id DESC")]
+            rows = [dict(r) for r in c.execute("SELECT * FROM watches ORDER BY id DESC")]
+            for row in rows:
+                row["auto_buy"] = row["auto_buy"] == 1
+            return rows
 
     def add_watch(self, name, retailer, url, max_price, browser=False):
         with self.connect() as c:
@@ -94,6 +108,22 @@ class ConfigStore:
                          ON CONFLICT(url) DO UPDATE SET name=excluded.name, retailer=excluded.retailer,
                          max_price=excluded.max_price, browser=excluded.browser""",
                       (name or "", retailer or "", url.strip(), max_price, int(bool(browser))))
+
+    def set_purchase_rule(self, watch_id, *, expected_sku, max_price,
+                          max_quantity=1, quantity=1, currency="AUD", auto_buy=False):
+        from .buy_rules import positive_money, positive_quantity
+        if (not isinstance(expected_sku, str) or not expected_sku.strip()
+                or expected_sku != expected_sku.strip() or currency != "AUD"
+                or positive_money(max_price) is None
+                or positive_quantity(max_quantity) is None
+                or positive_quantity(quantity) is None or quantity > max_quantity
+                or type(auto_buy) is not bool):
+            raise ValueError("Exact SKU, positive price, integer quantities and AUD required")
+        with self.connect() as c:
+            c.execute("""UPDATE watches SET expected_sku=?, max_price=?, max_quantity=?,
+                         quantity=?, currency=?, auto_buy=? WHERE id=?""",
+                      (expected_sku, float(max_price), max_quantity, quantity, currency,
+                       int(auto_buy), watch_id))
 
     def delete_watch(self, watch_id: int):
         with self.connect() as c:
@@ -129,3 +159,4 @@ class ConfigStore:
     def toggle_discover(self, discover_id: int):
         with self.connect() as c:
             c.execute("UPDATE discovers SET enabled=CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (discover_id,))
+
