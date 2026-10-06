@@ -113,3 +113,25 @@ Any future spending executor must re-read controls and revalidate current seller
 stock, cart quantities, price, currency and totals immediately before each side effect.
 
 Run offline tests with `python -m pytest -q`; no live retailer purchases are tested.
+
+
+### Read-only checks before a drop
+
+Run `python purchase_preflight.py --config watchlist.json` to inspect saved purchase
+rules without fetching retailer pages, changing settings, sending Discord messages,
+opening a cart or making a purchase. The report lists missing/invalid rules, unsupported
+retailers and duplicate product URLs. Exit code 1 means at least one purchase rule needs
+attention; monitor-only Kmart/Target entries are expected to be flagged as unsupported
+for purchasing. A valid configuration does not establish live stock or checkout readiness.
+GitHub Actions uses `watchlist.json`; the hosted dashboard stores its own settings in SQLite.
+All 26 repository watchlist entries explicitly have Auto-buy OFF and quantity/cap one,
+and the master permission is OFF. Existing SKU and price values are preserved.
+
+Purchase observations require a successful response at the exact configured URL. The
+dashboard shows the master permission and the last saved assessment; it does not treat a
+saved assessment as permission to spend. Current explicit cart tests require an unambiguous
+product form and a structured `productID` matching its hidden ID, independently of SKU.
+Missing ID evidence blocks the attempt. They recheck price/stock/identity, verify quantity
+one, stop on rate limits/security checks, and never retry an uncertain submission. The
+result is `UNCONFIRMED` after a click until actual basket contents can be verified; a header
+cart link is not proof of success. No live retailer cart or checkout tests have been run.

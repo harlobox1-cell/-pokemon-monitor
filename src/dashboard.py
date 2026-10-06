@@ -68,6 +68,7 @@ def build_app(store, monitor, admin_password: str):
           <div class='card'><div class='spread'><strong>Monitor</strong><span class='{'good' if settings.get('monitor_enabled') else 'bad'}'>{'ON' if settings.get('monitor_enabled') else 'OFF'}</span></div><p class='muted small'>Polling about every {int(settings.get('poll_seconds',60))} seconds.</p></div>
           <div class='card'><div class='spread'><strong>Discord</strong><span class='{'good' if webhook else 'warn'}'>{'CONNECTED' if webhook else 'NOT SET'}</span></div><p class='muted small'>{good} currently in-stock result(s).</p></div>
         </div>
+        <div class='card'><strong>Master purchase permission: {'ON' if settings.get('purchases_enabled') is True else 'OFF'}</strong><p class='small'>Purchase controls only; checkout is not connected.</p></div>
         <h2>Latest product checks</h2>
         """
         if not products:
@@ -79,6 +80,8 @@ def build_app(store, monitor, admin_password: str):
                 stock = "IN STOCK" if val is True else "OUT" if val is False else "UNKNOWN"
                 price = "Unknown" if data.get("price") is None else f"{data.get('price')} {html.escape(str(data.get('currency','AUD')))}"
                 body += f"<div class='card'><div class='product-title'>{html.escape(data.get('title') or url)}</div><p><span class='{cls}'>{stock}</span> · {html.escape(price)}</p><div class='row'><span class='pill'>{html.escape(data.get('retailer','unknown'))}</span><a class='btn secondary' href='{html.escape(url)}' target='_blank' rel='noopener'>Open</a></div></div>"
+                reason = str(data.get("purchase_reason") or "No purchase assessment recorded")
+                body += f"<p class='muted small'>Purchase assessment at last check: {html.escape(reason)}. This is a saved observation, not current permission to spend.</p>"
         return web.Response(text=page("Dashboard", body, True, request.query.get("msg", "")), content_type="text/html")
 
     async def settings_get(request):
@@ -105,7 +108,6 @@ def build_app(store, monitor, admin_password: str):
     async def settings_post(request):
         f = await request.post()
         store.set_setting("monitor_enabled", f.get("monitor_enabled") == "on")
-        store.set_setting("purchases_enabled", f.get("purchases_enabled") == "on")
         try:
             poll = max(30, min(3600, int(f.get("poll_seconds", 60))))
         except ValueError:
@@ -119,6 +121,7 @@ def build_app(store, monitor, admin_password: str):
             if not webhook.startswith("https://discord.com/api/webhooks/") and not webhook.startswith("https://discordapp.com/api/webhooks/"):
                 raise web.HTTPBadRequest(text="That does not look like a Discord webhook URL.")
             store.set_webhook(webhook)
+        store.set_setting("purchases_enabled", f.get("purchases_enabled") == "on")
         monitor.wake()
         raise web.HTTPFound("/settings?msg=" + quote("Settings saved"))
 

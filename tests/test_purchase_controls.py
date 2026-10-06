@@ -105,12 +105,17 @@ def test_dashboard_controls_and_authentication(tmp_path):
     store = ConfigStore(str(tmp_path))
     store.add_watch('Test', 'toymate-au', URL, 10)
     watch_id = store.list_watches()[0]['id']
-    monitor = SimpleNamespace(running=False, wake=lambda: None)
+    monitor = SimpleNamespace(running=False, wake=lambda: None,
+                              state=SimpleNamespace(data={"products": {URL: {"title": "Test", "purchase_reason": "<unsafe>"}}}))
     async def run():
         async with TestClient(TestServer(build_app(store, monitor, 'secret'))) as client:
             response = await client.post(f'/watches/{watch_id}/purchase-rule', data={}, allow_redirects=False)
             assert response.status == 302 and response.headers['Location'] == '/login'
             await client.post('/login', data={'password': 'secret'}, allow_redirects=False)
+            home = await client.get('/')
+            home_text = await home.text()
+            assert 'Master purchase permission: OFF' in home_text
+            assert '&lt;unsafe&gt;' in home_text and '<unsafe>' not in home_text
             response = await client.get('/watches')
             assert response.status == 200 and 'Auto-buy: OFF' in await response.text()
             response = await client.post(f'/watches/{watch_id}/purchase-rule', data={
@@ -123,8 +128,76 @@ def test_dashboard_controls_and_authentication(tmp_path):
                 'expected_sku': 'ABC-123', 'max_price': 'NaN', 'quantity': '1',
                 'max_quantity': '2'}, allow_redirects=False)
             assert response.status == 400
+            rejected = await client.post('/settings', data={'purchases_enabled': 'on', 'webhook': 'invalid'}, allow_redirects=False)
+            assert rejected.status == 400
+            assert store.get_settings()['purchases_enabled'] is False
             await client.post('/settings', data={'purchases_enabled': 'on'}, allow_redirects=False)
             assert store.get_settings()['purchases_enabled'] is True
             await client.post('/settings', data={}, allow_redirects=False)
             assert store.get_settings()['purchases_enabled'] is False
+    asyncio.run(run())
+
+@pytest.mark.parametrize('changes', [dict(url=''), dict(url=None), dict(url=1),
+    dict(url='https://toymate.com.au/checkout'), dict(enabled=1.0),
+    dict(max_quantity=2**63)])
+def test_additional_invalid_rules_fail_closed(changes):
+    assert not evaluate_purchase(snap(), rule(**changes), {'purchases_enabled': True}).eligible
+
+@pytest.mark.parametrize('field,value', [
+    ('seller', {'name': 'Marketplace seller'}), ('@id', 'https://toymate.com.au/other/'),
+    ('offers', {'price': 10, 'priceCurrency': 'AUD', 'availability': 'https://schema.org/OutOfStock'}),
+    ('offers', {'price': 10, 'priceCurrency': 'AUD'}),
+])
+def test_conflicting_product_evidence_cannot_authorize_purchase(field, value):
+    import json
+    product = {'@type': 'Product', 'sku': 'ABC-123', 'url': URL,
+               'offers': {'price': 10, 'priceCurrency': 'AUD', 'availability': 'https://schema.org/InStock'}}
+    product[field] = value
+    markup = '<script type="application/ld+json">' + json.dumps(product) + '</script><p>SKU: ABC-123 Online: Available</p>'
+    result = refine_snapshot(parse_product(URL, markup), markup, rule())
+    assert not result.stock_verified
+    assert not evaluate_buy_rule(result, rule()).eligible
+
+@pytest.mark.parametrize('changes', [dict(max_price='1e999'), dict(max_price='1e-999'),
+                                    dict(max_quantity=2**63), dict(quantity=2**63)])
+def test_unstorable_purchase_rule_is_rejected(tmp_path, changes):
+    store = ConfigStore(str(tmp_path))
+    store.add_watch('Test', 'toymate-au', URL, 10)
+    args = dict(expected_sku='ABC-123', max_price=10, max_quantity=1, quantity=1)
+    args.update(changes)
+    with pytest.raises(ValueError):
+        store.set_purchase_rule(store.list_watches()[0]['id'], **args)
+    assert store.list_watches()[0]['auto_buy'] is False
+    assert store.list_watches()[0]['max_price'] == 10
+
+@pytest.mark.parametrize('final_url,status,eligible', [(URL, 200, True),
+    ('https://evil.example/test/', 200, False), (URL, 429, False), (None, None, False)])
+def test_monitor_purchase_evidence_requires_final_response_without_changing_alerts(tmp_path, final_url, status, eligible):
+    import asyncio
+    import json
+    from src.monitor import PokemonMonitor
+    class Config:
+        def get_settings(self):
+            return {'purchases_enabled': True}
+        def get_webhook(self):
+            return 'test-webhook'
+    async def run():
+        monitor = PokemonMonitor(Config(), str(tmp_path))
+        markup = '<script type="application/ld+json">' + json.dumps({
+            '@type': 'Product', 'sku': 'ABC-123', 'url': URL,
+            'offers': {'price': 10, 'priceCurrency': 'AUD', 'availability': 'https://schema.org/InStock'}
+        }) + '</script><p>SKU: ABC-123 Online: Available</p>'
+        async def html(url, **kwargs):
+            monitor.fetcher.last_response[url] = {'url': final_url, 'status': status}
+            return markup
+        sent = []
+        async def notify(*args):
+            sent.append(args)
+        monitor.fetcher.html = html
+        monitor.notifier.send = notify
+        await monitor.check_item(rule(), {'purchases_enabled': True, 'strict_product_checks': True})
+        saved = monitor.state.data['products'][URL]
+        assert saved['purchase_eligible'] is eligible
+        assert saved['alert_eligible'] is True
+        assert len(sent) == 1
     asyncio.run(run())

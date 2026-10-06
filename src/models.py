@@ -16,7 +16,7 @@ class ProductSnapshot:
 
     stock_verified: bool = False
     security_blocked: bool = False
+    product_id: str | None = None
 
     def to_dict(self):
         return asdict(self)
-

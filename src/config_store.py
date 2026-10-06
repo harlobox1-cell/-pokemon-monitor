@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import math
 import sqlite3
 from pathlib import Path
 from .secure_store import SecretBox
@@ -119,11 +120,16 @@ class ConfigStore:
                 or positive_quantity(quantity) is None or quantity > max_quantity
                 or type(auto_buy) is not bool):
             raise ValueError("Exact SKU, positive price, integer quantities and AUD required")
+        stored_price = float(max_price)
+        if not math.isfinite(stored_price) or stored_price <= 0:
+            raise ValueError("Maximum price cannot be stored safely")
         with self.connect() as c:
-            c.execute("""UPDATE watches SET expected_sku=?, max_price=?, max_quantity=?,
+            cursor = c.execute("""UPDATE watches SET expected_sku=?, max_price=?, max_quantity=?,
                          quantity=?, currency=?, auto_buy=? WHERE id=?""",
-                      (expected_sku, float(max_price), max_quantity, quantity, currency,
+                      (expected_sku, stored_price, max_quantity, quantity, currency,
                        int(auto_buy), watch_id))
+            if cursor.rowcount != 1:
+                raise ValueError("Product no longer exists")
 
     def delete_watch(self, watch_id: int):
         with self.connect() as c:
@@ -159,4 +165,3 @@ class ConfigStore:
     def toggle_discover(self, discover_id: int):
         with self.connect() as c:
             c.execute("UPDATE discovers SET enabled=CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (discover_id,))
-

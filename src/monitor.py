@@ -4,7 +4,7 @@ import random
 from datetime import datetime, timezone
 
 from .fetcher import Fetcher
-from .buy_rules import evaluate_purchase
+from .buy_rules import BuyDecision, evaluate_purchase
 from .alert_policy import refine_snapshot
 import math
 from .notifier import DiscordNotifier
@@ -68,6 +68,7 @@ class PokemonMonitor:
         key = url
         retailer = item.get("retailer") or infer_retailer(url)
         try:
+            self.fetcher.last_response.pop(url, None)
             html = await self.fetcher.html(url, browser=bool(item.get("browser", False)))
             snap = parse_product(url, html, retailer)
             if settings.get("strict_product_checks"):
@@ -93,6 +94,9 @@ class PokemonMonitor:
         try:
             purchase_snap = refine_snapshot(parse_product(url, html, retailer), html, item)
             decision = evaluate_purchase(purchase_snap, item, settings)
+            response = self.fetcher.last_response.get(url, {})
+            if decision.eligible and (response.get("url") != url or response.get("status") != 200):
+                decision = BuyDecision(False, "Final product URL and successful response not verified")
             current["purchase_eligible"] = decision.eligible
             current["purchase_reason"] = decision.reason
         except Exception:
@@ -190,4 +194,3 @@ class PokemonMonitor:
         finally:
             self.running = False
             await self.close()
-
