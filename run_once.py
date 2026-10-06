@@ -8,6 +8,8 @@ from urllib.parse import urlsplit
 from src.config_store import DEFAULT_SETTINGS
 from src.monitor import PokemonMonitor
 from src.retailers import infer_retailer
+from src.notifier import DiscordDeliveryError
+from src.run_report import summarize_run, report_markdown
 
 
 class ActionsConfig:
@@ -51,7 +53,7 @@ async def main():
             await monitor.notifier.send(config.webhook, '✅ Pokémon monitor connection test', [
                 'Discord delivery is working. This is a setup test, not a stock alert.',
                 f'{len(config.watches)} product URLs configured. First-party sellers only.',
-                'Scheduled every 15 minutes; GitHub may delay runs. Only verified stock within fixed price caps will alert.',
+                'Scheduled every 5 minutes; GitHub may delay runs. Only verified stock within fixed price caps will alert.',
                 'Coverage gaps are recorded in watchlist.json; no auto-purchases.'
             ])
             monitor.state.data['connection_test_sent'] = True
@@ -88,12 +90,24 @@ async def main():
         if failed == len(config.watches):
             raise SystemExit('All product checks failed; monitoring cannot confirm stock.')
     finally:
+        report = summarize_run(monitor, config.watches)
+        print('Monitor summary: ' + json.dumps(report, sort_keys=True))
+        summary_path = os.getenv('GITHUB_STEP_SUMMARY')
+        if summary_path:
+            try:
+                with open(summary_path, 'a', encoding='utf-8') as summary:
+                    summary.write(report_markdown(report))
+            except OSError:
+                print('Could not write the GitHub run summary; counts are available in the log.')
         await monitor.close()
 
 
 if __name__ == '__main__':
     try:
         asyncio.run(main())
+    except DiscordDeliveryError as exc:
+        print(str(exc))
+        raise SystemExit(1) from None
     except Exception as exc:
         # Never put webhook URLs or response bodies in public Actions logs.
         print(f'Monitor failed ({type(exc).__name__}); inspect configuration and connectivity.')

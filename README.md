@@ -135,3 +135,21 @@ Missing ID evidence blocks the attempt. They recheck price/stock/identity, verif
 one, stop on rate limits/security checks, and never retry an uncertain submission. The
 result is `UNCONFIRMED` after a click until actual basket contents can be verified; a header
 cart link is not proof of success. No live retailer cart or checkout tests have been run.
+
+### Discord diagnostics
+
+A successful stock-monitor run does not necessarily send a Discord message. Stock
+alerts fire for a first qualifying observation, a transition into qualifying stock, or
+a price change; unchanged stock is quiet. Setup/health messages are cached and sent once.
+Purchase permissions being OFF do not suppress stock alerts.
+
+Every run now prints a safe `Monitor summary` and writes a GitHub job summary with
+fetch failures, qualifying/unknown/out-of-stock counts, and stock messages attempted
+versus accepted by Discord. Counts cover this run only. Discord failures report HTTP
+status (or a transport error) without exposing webhook credentials or response bodies.
+
+For an explicitly requested end-to-end test, run the manual **Discord connection test**
+workflow. It posts exactly one clearly labelled test using the existing
+`DISCORD_WEBHOOK_URL` secret, without accessing retailers or modifying cached monitor
+state. Locally, `python discord_test.py` sends nothing; `--send` explicitly posts the test.
+The test workflow has no push or scheduled trigger.
